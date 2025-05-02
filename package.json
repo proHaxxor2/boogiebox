@@ -3,12 +3,13 @@
     "version": "1.0.0",
     "description": "BoogieBox sample sharing app",
     "scripts": {
-        "start": "netlify dev"
+      "start": "netlify dev"
     },
     "dependencies": {
-        "firebase": "^10.7.0"
+      "firebase": "^10.7.0",
+      "firebase-admin": "^12.0.0"
     },
     "devDependencies": {
       "netlify-cli": "^17.0.0"
     }
-}
+  }
