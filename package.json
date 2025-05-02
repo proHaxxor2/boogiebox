@@ -1,0 +1,14 @@
+{
+    "name": "boogiebox",
+    "version": "1.0.0",
+    "description": "BoogieBox sample sharing app",
+    "scripts": {
+        "start": "netlify dev"
+    },
+    "dependencies": {
+        "firebase": "^10.7.0"
+    },
+    "devDependencies": {
+      "netlify-cli": "^17.0.0"
+    }
+}

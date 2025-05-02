@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="boombox.ico" type="image/x-icon">
+    <title>BoogieBox</title>
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js"></script>
+    <style>
+        /* Your existing CSS remains unchanged */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #111 0%, #333 50%, #eee 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        nav {
+            background: rgba(0, 0, 0, 0.8);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #fff, #777);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            position: relative;
+            padding: 5px 0;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover {
+            color: #ccc;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #fff, transparent);
+            transition: width 0.3s;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .search-section {
+            padding: 40px 0 20px;
+        }
+
+        .search-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #search-input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            padding: 10px;
+            width: 100%;
+            outline: none;
+        }
+
+        #search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-icon {
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .tag-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 0 auto 30px;
+            max-width: 800px;
+            justify-content: center;
+        }
+
+        .tag-filter {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tag-filter:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tag-filter.active {
+            background: white;
+            color: black;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .content-section {
+            padding: 20px 0;
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .sample-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.3));
+            border-radius: 15px;
+            padding: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .sample-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .sample-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #fff, transparent);
+        }
+
+        .sample-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .sample-info {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 15px;
+        }
+
+        .sample-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .sample-tag {
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .sample-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .control-btn.play {
+            background: white;
+            color: black;
+        }
+
+        .control-btn.play:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .upload-section {
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.05));
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 40px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: left;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-input, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            color: white;
+            font-size: 16px;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .tag-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px;
+            min-height: 45px;
+        }
+
+        .tag-badge {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 4px 10px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-title {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .modal-content p {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+        }
+
+        .format-options {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .format-btn {
+            background: #444;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .format-btn:hover {
+            background: #666;
+        }
+
+        .note {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #tag-input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 14px;
+            flex: 1;
+            min-width: 100px;
+            outline: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(90deg, #fff, #ccc);
+            color: #111;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-top: 15px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .no-results {
+            text-align: center;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 40px;
+            grid-column: 1 / -1;
+        }
+
+        .waveform {
+            height: 40px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .waveform-bar {
+            flex: 1;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            transition: height 0.3s;
+            max-width: 4px;
+        }
+
+        .playing .waveform-bar {
+            animation: waveform-animation 1s infinite;
+        }
+
+        @keyframes waveform-animation {
+            0%, 100% { height: 30%; }
+            25% { height: 60%; }
+            50% { height: 100%; }
+            75% { height: 40%; }
+        }
+
+        .sample-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .audio-player {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .audio-player audio {
+            width: 100%;
+            height: 30px;
+            filter: invert(100%);
+            opacity: 0.7;
+            border-radius: 10px;
+        }
+
+        footer {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px 20px;
+            margin-top: 40px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+
+        .footer-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .footer-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-link {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-link:hover {
+            color: white;
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        .user-dropdown {
+            position: relative;
+        }
+
+        .user-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+
+        .user-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #888, #fff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            min-width: 200px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            margin-top: 10px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            display: block;
+            transition: background 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #222, #333);
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            position: relative;
+            transform: translateY(-50px);
+            transition: transform 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: white;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                position: fixed;
+                top: 70px;
+                right: -100%;
+                flex-direction: column;
+                background: rgba(0, 0, 0, 0.9);
+                width: 70%;
+                height: calc(100vh - 70px);
+                padding: 30px;
+                transition: right 0.3s;
+            }
+
+            .nav-links.show {
+                right: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .main-content {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 20px;
+            }
+
+            .upload-area {
+                padding: 20px;
+            }
+
+            .search-container {
+                padding: 8px 15px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Your existing HTML remains unchanged -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">BoogieBox</div>
+            <div class="nav-links" id="navLinks">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#browse" class="nav-link">Browse</a>
+                <a href="#upload" class="nav-link">Upload</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#contact" class="nav-link">Contact</a>
+            </div>
+            <div class="user-dropdown">
+                <div class="user-btn" id="userBtn">
+                    <div class="user-avatar">U</div>
+                    <span>User</span>
+                </div>
+            </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+        </div>
+    </nav>
+
+    <div class="container" id="home">
+        <div class="search-section">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search samples by name, type, tag...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="tag-filters" id="tagFilters">
+                <div class="tag-filter active" data-tag="all">All</div>
+                <div class="tag-filter" data-tag="bass">Bass</div>
+                <div class="tag-filter" data-tag="drums">Drums</div>
+                <div class="tag-filter" data-tag="synth">Synth</div>
+                <div class="tag-filter" data-tag="vocals">Vocals</div>
+                <div class="tag-filter" data-tag="fx">FX</div>
+                <div class="tag-filter" data-tag="piano">Piano</div>
+                <div class="tag-filter" data-tag="guitar">Guitar</div>
+            </div>
+        </div>
+
+        <div class="upload-section" id="upload">
+            <h2 class="upload-title">Upload New Samples</h2>
+            <div class="upload-area" id="drop-area">
+                <div class="upload-icon">📁</div>
+                <p class="upload-text">Drag & drop audio files here or click to browse</p>
+                <p class="upload-text" style="font-size: 14px; margin-top: 10px;">Supported formats: MP3, WAV, OGG, FLAC</p>
+            </div>
+            <input type="file" id="file-input" class="file-input" accept="audio/*" multiple>
+            <div class="upload-form" id="sample-form" style="display: none;">
+                <div class="form-group">
+                    <label for="sample-name">Sample Name</label>
+                    <input type="text" id="sample-name" class="form-input" placeholder="Enter sample name">
+                </div>
+                <div class="form-group">
+                    <label for="sample-type">Sample Type</label>
+                    <select id="sample-type" class="form-select">
+                        <option value="Bass">Bass</option>
+                        <option value="Drums">Drums</option>
+                        <option value="Synth">Synth</option>
+                        <option value="Vocals">Vocals</option>
+                        <option value="FX">FX</option>
+                        <option value="Piano">Piano</option>
+                        <option value="Guitar">Guitar</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tag-input">Tags (press Enter to add)</label>
+                    <div class="tag-input-container" id="tag-container">
+                        <input type="text" id="tag-input" placeholder="Add tags...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sample-description">Description (optional)</label>
+                    <textarea id="sample-description" class="form-input" rows="3" placeholder="Describe your sample..."></textarea>
+                </div>
+            </div>
+            <button class="upload-btn" id="upload-btn">Upload Samples</button>
+        </div>
+
+        <div class="content-section" id="browse">
+            <h2 class="section-title">Latest Samples</h2>
+            <div class="main-content" id="latest-container"></div>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">All Samples</h2>
+            <div class="main-content" id="samples-container"></div>
+        </div>
+
+        <div class="content-section" id="about">
+            <h2 class="section-title">About BoogieBox</h2>
+            <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px;">
+                <p style="margin-bottom: 15px;">BoogieBox was first made by DJ LN3 DA D27</p>
+                <p>Whether you're looking for that perfect drum loop, a unique synth sound, or want to share your own creations with the world, Sample Library is the place to be!</p>
+            </div>
+        </div>
+
+        <div class="content-section" id="contact">
+            <h2 class="section-title">Contact Us</h2>
+            <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px;">
+                <p style="margin-bottom: 15px;">Have questions, suggestions, or just want to say hello? We'd love to hear from you!</p>
+                <p>Email: <a href="#" style="color: white;">djln3official@gmail.com</a></p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="logo">BoogieBox</div>
+                <p>Your one-stop destination for high-quality audio samples. Share, discover, create. Made by DJ LN3 DA D27</p>
+            </div>
+            <div class="footer-section">
+                <h3 class="footer-title">Quick Links</h3>
+                <div class="footer-links">
+                    <a href="#home" class="footer-link">Home</a>
+                    <a href="#browse" class="footer-link">Browse Samples</a>
+                    <a href="#upload" class="footer-link">Upload</a>
+                    <a href="#about" class="footer-link">About Us</a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3 class="footer-title">Connect</h3>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">Twitter</a>
+                    <a href="#" class="footer-link">Instagram</a>
+                    <a href="#" class="footer-link">YouTube</a>
+                    <a href="#" class="footer-link">Discord</a>
+                </div>
+            </div>
+        </div>
+        <div class="copyright">
+            © 2025 BoogieBox. All rights reserved.
+        </div>
+    </footer>
+
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeLoginModal">×</button>
+            <h2 class="modal-title">Login</h2>
+            <div class="upload-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" class="form-input" placeholder="Your email">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-input" placeholder="Your password">
+                </div>
+                <button class="upload-btn">Login</button>
+                <p style="text-align: center; margin-top: 20px; color: rgba(255,255,255,0.7);">
+                    Don't have an account?
+                    <a href="#" id="showSignupBtn" style="color: white; text-decoration: underline;">Sign up</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="signupModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeSignupModal">×</button>
+            <h2 class="modal-title">Sign Up</h2>
+            <div class="upload-form">
+                <div class="form-group">
+                    <label for="signup-name">Name</label>
+                    <input type="text" id="signup-name" class="form-input" placeholder="Your name">
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" class="form-input" placeholder="Your email">
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" class="form-input" placeholder="Choose a password">
+                </div>
+                <div class="form-group">
+                    <label for="signup-confirm">Confirm Password</label>
+                    <input type="password" id="signup-confirm" class="form-input" placeholder="Confirm password">
+                </div>
+                <button class="upload-btn">Sign Up</button>
+                <p style="text-align: center; margin-top: 20px; color: rgba(255,255,255,0.7);">
+                    Already have an account?
+                    <a href="#" id="showLoginBtn" style="color: white; text-decoration: underline;">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="downloadModal">
+        <div class="modal-content">
+            <span class="modal-close" id="closeDownloadModal">×</span>
+            <h2 class="modal-title">Choose Download Format</h2>
+            <p>Select the audio format for your download:</p>
+            <div class="format-options">
+                <button class="format-btn" data-format="mp3">MP3</button>
+                <button class="format-btn" data-format="wav">WAV</button>
+            </div>
+            <p class="note">Note: The file will be downloaded in the selected format. Some formats may require browser compatibility.</p>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "your-auth-domain",
+            projectId: "your-project-id",
+            storageBucket: "your-storage-bucket",
+            messagingSenderId: "your-messaging-sender-id",
+            appId: "your-app-id"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // DOM elements
+        const samplesContainer = document.getElementById('samples-container');
+        const latestContainer = document.getElementById('latest-container');
+        const searchInput = document.getElementById('search-input');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const dropArea = document.getElementById('drop-area');
+        const sampleForm = document.getElementById('sample-form');
+        const tagContainer = document.getElementById('tag-container');
+        const tagInput = document.getElementById('tag-input');
+        const tagFilters = document.getElementById('tagFilters');
+        const userBtn = document.getElementById('userBtn');
+        const userDropdown = document.getElementById('userDropdown');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const navLinks = document.getElementById('navLinks');
+
+        const loginModal = document.getElementById('loginModal');
+        const signupModal = document.getElementById('signupModal');
+        const closeLoginModal = document.getElementById('closeLoginModal');
+        const closeSignupModal = document.getElementById('closeSignupModal');
+        const showSignupBtn = document.getElementById('showSignupBtn');
+        const showLoginBtn = document.getElementById('showLoginBtn');
+        const downloadModal = document.getElementById('downloadModal');
+        const closeDownloadModal = document.getElementById('closeDownloadModal');
+
+        let selectedFiles = [];
+        let currentTags = [];
+        let currentFilterTag = 'all';
+        let currentDownloadSample = null;
+        let allSamples = []; // Store samples in memory for filtering
+
+        // Generate waveform HTML
+        function generateWaveform() {
+            let waveformHTML = '<div class="waveform">';
+            for (let i = 0; i < 20; i++) {
+                const height = Math.floor(Math.random() * 70) + 30;
+                waveformHTML += `<div class="waveform-bar" style="height: ${height}%"></div>`;
+            }
+            waveformHTML += '</div>';
+            return waveformHTML;
+        }
+
+        // Create sample card
+        function createSampleCard(sample) {
+            const card = document.createElement('div');
+            card.className = 'sample-card';
+            card.dataset.id = sample.id;
+
+            let tagsHTML = '<div class="sample-tags">';
+            sample.tags.forEach(tag => {
+                tagsHTML += `<span class="sample-tag">${tag}</span>`;
+            });
+            tagsHTML += '</div>';
+
+            let audioElement = sample.fileUrl ? `
+                <div class="audio-player">
+                    <audio controls src="${sample.fileUrl}"></audio>
+                </div>
+            ` : '';
+
+            card.innerHTML = `
+                <div class="sample-name">${sample.name}</div>
+                <div class="sample-info">${sample.type}</div>
+                ${tagsHTML}
+                ${generateWaveform()}
+                <div class="sample-details">
+                    <span>${sample.duration}</span>
+                    <span>${sample.date}</span>
+                </div>
+                ${audioElement}
+                <div class="sample-controls">
+                    <button class="control-btn play">▶</button>
+                    <button class="control-btn download">⬇️</button>
+                    <button class="control-btn">⋯</button>
+                </div>
+            `;
+
+            const downloadBtn = card.querySelector('.download');
+            if (downloadBtn && sample.fileUrl) {
+                downloadBtn.addEventListener('click', () => {
+                    currentDownloadSample = sample;
+                    downloadModal.classList.add('show');
+                });
+            }
+
+            return card;
+        }
+
+        // Display samples in a container
+        function displaySamples(samples, container) {
+            container.innerHTML = '';
+
+            if (samples.length === 0) {
+                container.innerHTML = '<div class="no-results">No samples found. Try adjusting your search or filters, or <a href="#upload">upload new samples</a>!</div>';
+                return;
+            }
+
+            samples.forEach(sample => {
+                const card = createSampleCard(sample);
+                container.appendChild(card);
+            });
+        }
+
+        // Search and filter samples
+        function searchAndFilterSamples(samples) {
+            const query = searchInput.value.toLowerCase().trim();
+            let filteredSamples = [...samples];
+
+            if (query) {
+                filteredSamples = filteredSamples.filter(sample =>
+                    sample.name.toLowerCase().includes(query) ||
+                    sample.type.toLowerCase().includes(query) ||
+                    sample.tags.some(tag => tag.toLowerCase().includes(query))
+                );
+            }
+
+            if (currentFilterTag !== 'all') {
+                filteredSamples = filteredSamples.filter(sample =>
+                    sample.tags.includes(currentFilterTag.toLowerCase()) ||
+                    sample.type.toLowerCase() === currentFilterTag.toLowerCase()
+                );
+            }
+
+            return filteredSamples;
+        }
+
+        // Fetch samples from Firestore and update sections
+        async function updateAllSections() {
+            try {
+                const querySnapshot = await db.collection('samples').get();
+                allSamples = [];
+                querySnapshot.forEach(doc => {
+                    allSamples.push({ id: doc.id, ...doc.data() });
+                });
+
+                const filteredSamples = searchAndFilterSamples(allSamples);
+
+                const latestSamples = [...filteredSamples]
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 8);
+                displaySamples(latestSamples, latestContainer);
+
+                displaySamples(filteredSamples, samplesContainer);
+            } catch (error) {
+                console.error('Error fetching samples:', error);
+                samplesContainer.innerHTML = '<div class="no-results">Error loading samples. Please try again later.</div>';
+            }
+        }
+
+        // Add a new tag
+        function addTag(tag) {
+            tag = tag.trim().toLowerCase();
+            if (tag && !currentTags.includes(tag)) {
+                currentTags.push(tag);
+
+                const tagBadge = document.createElement('div');
+                tagBadge.className = 'tag-badge';
+                tagBadge.innerHTML = `
+                    ${tag}
+                    <span class="tag-remove" data-tag="${tag}">×</span>
+                `;
+
+                tagContainer.insertBefore(tagBadge, tagInput);
+            }
+            tagInput.value = '';
+        }
+
+        // Remove a tag
+        function removeTag(tag) {
+            const index = currentTags.indexOf(tag);
+            if (index !== -1) {
+                currentTags.splice(index, 1);
+
+                const badges = tagContainer.querySelectorAll('.tag-badge');
+                badges.forEach(badge => {
+                    if (badge.querySelector('.tag-remove').dataset.tag === tag) {
+                        badge.remove();
+                    }
+                });
+            }
+        }
+
+        // Handle form submission and add new sample
+        async function addNewSample() {
+            if (selectedFiles.length === 0) {
+                alert("Please select at least one audio file");
+                return;
+            }
+
+            const sampleName = document.getElementById('sample-name').value || "Unnamed Sample";
+            const sampleType = document.getElementById('sample-type').value;
+            const sampleDescription = document.getElementById('sample-description').value || "";
+
+            try {
+                for (const file of selectedFiles) {
+                    const audio = new Audio(URL.createObjectURL(file));
+                    await new Promise(resolve => {
+                        audio.onloadedmetadata = resolve;
+                    });
+
+                    const minutes = Math.floor(audio.duration / 60);
+                    const seconds = Math.floor(audio.duration % 60);
+                    const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                    // Convert file to base64
+                    const reader = new FileReader();
+                    const base64Promise = new Promise(resolve => {
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.readAsDataURL(file);
+                    });
+                    const base64File = await base64Promise;
+
+                    const sampleData = {
+                        name: sampleName,
+                        type: sampleType,
+                        duration: formattedDuration,
+                        tags: JSON.stringify([...currentTags, sampleType.toLowerCase()]),
+                        description: sampleDescription,
+                        file: base64File,
+                    };
+
+                    const response = await fetch('/api/upload-sample', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(sampleData),
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to upload sample');
+                    }
+                }
+
+                // Reset form
+                document.getElementById('sample-name').value = '';
+                document.getElementById('sample-description').value = '';
+                currentTags = [];
+                tagContainer.querySelectorAll('.tag-badge').forEach(badge => badge.remove());
+                selectedFiles = [];
+                sampleForm.style.display = 'none';
+
+                alert("Sample(s) uploaded successfully!");
+                updateAllSections();
+                updateTagFilters();
+            } catch (error) {
+                console.error('Error uploading sample:', error);
+                alert("Failed to upload sample(s). Please try again. " + error.message);
+            }
+        }
+
+        // Update tag filters dynamically
+        async function updateTagFilters() {
+            try {
+                const uniqueTags = [...new Set(allSamples.flatMap(s => s.tags))];
+                tagFilters.innerHTML = `
+                    <div class="tag-filter ${currentFilterTag === 'all' ? 'active' : ''}" data-tag="all">All</div>
+                    ${uniqueTags.map(tag => `
+                        <div class="tag-filter ${currentFilterTag === tag ? 'active' : ''}" data-tag="${tag}">${tag.charAt(0).toUpperCase() + tag.slice(1)}</div>
+                    `).join('')}
+                `;
+            } catch (error) {
+                console.error('Error updating tag filters:', error);
+            }
+        }
+
+        // Toggle tag filter
+        function toggleTagFilter(filter) {
+            currentFilterTag = filter;
+            updateTagFilters();
+            updateAllSections();
+        }
+
+        // Initialize
+        function init() {
+            updateAllSections();
+            updateTagFilters();
+
+            searchInput.addEventListener('input', updateAllSections);
+
+            tagFilters.addEventListener('click', (e) => {
+                const filter = e.target.closest('.tag-filter');
+                if (filter) {
+                    toggleTagFilter(filter.dataset.tag);
+                }
+            });
+
+            dropArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const files = e.target.files;
+                handleFiles(files);
+            });
+
+            uploadBtn.addEventListener('click', () => {
+                if (sampleForm.style.display === 'flex') {
+                    addNewSample();
+                } else {
+                    fileInput.click();
+                }
+            });
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                dropArea.style.borderColor = 'white';
+                dropArea.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+            }
+
+            function unhighlight() {
+                dropArea.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                dropArea.style.backgroundColor = 'transparent';
+            }
+
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            tagInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    addTag(tagInput.value);
+                }
+            });
+
+            tagContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('tag-remove')) {
+                    removeTag(e.target.dataset.tag);
+                }
+            });
+
+            userBtn.addEventListener('click', () => {
+                userDropdown.classList.toggle('show');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.user-dropdown') && userDropdown.classList.contains('show')) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+
+            mobileMenuBtn.addEventListener('click', () => {
+                navLinks.classList.toggle('show');
+                mobileMenuBtn.textContent = navLinks.classList.contains('show') ? '✕' : '☰';
+            });
+
+            closeLoginModal.addEventListener('click', () => loginModal.classList.remove('show'));
+            closeSignupModal.addEventListener('click', () => signupModal.classList.remove('show'));
+
+            showSignupBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginModal.classList.remove('show');
+                signupModal.classList.add('show');
+            });
+
+            showLoginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                signupModal.classList.remove('show');
+                loginModal.classList.add('show');
+            });
+
+            closeDownloadModal.addEventListener('click', () => {
+                downloadModal.classList.remove('show');
+                currentDownloadSample = null;
+            });
+
+            downloadModal.addEventListener('click', async (e) => {
+                const formatBtn = e.target.closest('.format-btn');
+                if (formatBtn && currentDownloadSample) {
+                    const selectedFormat = formatBtn.dataset.format;
+                    const sampleId = currentDownloadSample.id;
+
+                    try {
+                        const a = document.createElement('a');
+                        a.href = currentDownloadSample.fileUrl;
+                        a.download = `${currentDownloadSample.name}.${selectedFormat}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+
+                        downloadModal.classList.remove('show');
+                        currentDownloadSample = null;
+                    } catch (error) {
+                        console.error('Error downloading sample:', error);
+                        alert('Failed to download sample. Please try again.');
+                    }
+                }
+            });
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('href') !== '#home' &&
+                    link.getAttribute('href') !== '#browse' &&
+                    link.getAttribute('href') !== '#upload' &&
+                    link.getAttribute('href') !== '#about' &&
+                    link.getAttribute('href') !== '#contact') {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        loginModal.classList.add('show');
+                    });
+                }
+            });
+        }
+
+        // Handle dropped files
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        // Handle files
+        function handleFiles(files) {
+            selectedFiles = [];
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                if (!file.type.startsWith('audio/')) {
+                    alert('Please upload audio files only.');
+                    continue;
+                }
+
+                selectedFiles.push(file);
+            }
+
+            if (selectedFiles.length > 0) {
+                sampleForm.style.display = 'flex';
+                document.getElementById('sample-name').value = selectedFiles[0].name.replace(/\.[^/.]+$/, "");
+
+                const fileType = selectedFiles[0].type.split('/')[1].toLowerCase();
+                if (!currentTags.includes(fileType)) {
+                    addTag(fileType);
+                }
+            }
+        }
+
+        // Play button functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('play')) {
+                const card = e.target.closest('.sample-card');
+
+                const audioElement = card.querySelector('audio');
+                if (audioElement) {
+                    if (audioElement.paused) {
+                        document.querySelectorAll('audio').forEach(audio => {
+                            if (!audio.paused) {
+                                audio.pause();
+                                audio.closest('.sample-card').classList.remove('playing');
+                                audio.closest('.sample-card').querySelector('.play').textContent = '▶';
+                            }
+                        });
+
+                        audioElement.play();
+                        e.target.textContent = '⏸';
+                        card.classList.add('playing');
+
+                        audioElement.onended = function() {
+                            card.classList.remove('playing');
+                            e.target.textContent = '▶';
+                        };
+                    } else {
+                        audioElement.pause();
+                        e.target.textContent = '▶';
+                        card.classList.remove('playing');
+                    }
+                }
+            }
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+
+                if (href === '#profile' || href === '#my-samples' ||
+                    href === '#settings' || href === '#logout') {
+                    return;
+                }
+
+                e.preventDefault();
+
+                if (navLinks.classList.contains('show')) {
+                    navLinks.classList.remove('show');
+                    mobileMenuBtn.textContent = '☰';
+                }
+
+                const targetElement = document.querySelector(href);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    document.querySelector(`.nav-link[href="${href}"]`)?.classList.add('active');
+                }
+            });
+        });
+
+        // Initialize everything
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
